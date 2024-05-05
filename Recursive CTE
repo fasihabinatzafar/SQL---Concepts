@@ -1,0 +1,17 @@
+WITH RECURSIVE DateSearch AS (
+    SELECT MIN(ID) AS MinID, MAX(ID) AS MaxID FROM Logs
+    UNION ALL
+    SELECT CASE WHEN (SELECT Date FROM Logs WHERE ID = (MinID + MaxID) / 2) < '2023-01-03'
+                THEN (MinID + MaxID) / 2 + 1 ELSE MinID END,
+           CASE WHEN (SELECT Date FROM Logs WHERE ID = (MinID + MaxID) / 2) > '2023-01-07'
+                THEN (MinID + MaxID) / 2 - 1 ELSE MaxID END
+    FROM DateSearch
+    WHERE NOT (MinID > MaxID)
+      AND ((SELECT Date FROM Logs WHERE ID = MinID) < '2023-01-03' OR
+           (SELECT Date FROM Logs WHERE ID = MaxID) > '2023-01-07')
+),
+Boundaries AS (
+    SELECT MinID, MaxID FROM DateSearch WHERE MinID = MaxID
+    LIMIT 1
+)
+SELECT * FROM Logs WHERE ID BETWEEN (SELECT MinID FROM Boundaries) AND (SELECT MaxID FROM Boundaries);
